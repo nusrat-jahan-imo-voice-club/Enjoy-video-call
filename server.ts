@@ -27,6 +27,50 @@ const PORT = 3000;
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
+// Dynamic video-call directory resolver for supporting user-uploaded mp4 files (e.g. 5000.mp4)
+app.get('*', (req, res, next) => {
+  const urlPath = decodeURIComponent(req.path).toLowerCase();
+  if (urlPath.endsWith('.mp4')) {
+    const filename = path.basename(decodeURIComponent(req.path));
+    const baseNameWithoutExt = path.parse(filename).name;
+    
+    const possibleDirs = [
+      path.join(process.cwd(), 'public', 'video call'),
+      path.join(process.cwd(), 'public', 'Video call'),
+      path.join(process.cwd(), 'public', 'video_call'),
+      path.join(process.cwd(), 'public', 'video-call'),
+      path.join(process.cwd(), 'public', 'Video_call'),
+      path.join(process.cwd(), 'public', 'Video-call'),
+      path.join(process.cwd(), 'public', 'video'),
+      path.join(process.cwd(), 'public'),
+      path.join(process.cwd(), 'dist', 'video call'),
+      path.join(process.cwd(), 'dist', 'Video call'),
+      path.join(process.cwd(), 'dist'),
+      process.cwd()
+    ];
+
+    for (const dir of possibleDirs) {
+      if (fs.existsSync(dir)) {
+        try {
+          const filesInDir = fs.readdirSync(dir);
+          const matchedFile = filesInDir.find(f => {
+            const parsed = path.parse(f);
+            return parsed.name === baseNameWithoutExt && (parsed.ext.toLowerCase() === '.mp4');
+          });
+          if (matchedFile) {
+            const fullPath = path.join(dir, matchedFile);
+            console.log(`[Video Delivery Sync] Serving mapped video for profile ${baseNameWithoutExt}: ${fullPath}`);
+            return res.sendFile(fullPath);
+          }
+        } catch (e) {
+          // Quietly skip read errors on subfolders
+        }
+      }
+    }
+  }
+  next();
+});
+
 const AUTH_DIR = path.join(process.cwd(), 'baileys_auth_info');
 if (!fs.existsSync(AUTH_DIR)) {
   fs.mkdirSync(AUTH_DIR, { recursive: true });
