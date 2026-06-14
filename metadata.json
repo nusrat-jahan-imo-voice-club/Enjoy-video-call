@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Remix: Live Video Chat",
+  "description": "বিশ্বের যেকোনো প্রান্তের মানুষের সাথে সরাসরি ভিডিও কলে কথা বলুন ও নতুন বন্ধু তৈরি করুন।",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
